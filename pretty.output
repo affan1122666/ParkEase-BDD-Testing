@@ -1,0 +1,147 @@
+Feature: Automatic ParkEase wallet settlement
+  As a registered ParkEase driver
+  I want the parking amount to be collected from my wallet when leaving
+  So that I can exit the parking plaza without waiting at a cashier
+  @smoke
+  Scenario: An electric-car driver completes a normal exit payment 
+    Given driver "Sara" has an active ParkEase session
+    And the electric vehicle "ICT-4521" belongs to this driver
+    And the wallet contains Rs. 1,000
+    And the vehicle entered at 09:00
+    When the vehicle exits at 12:40
+    Then the driver should receive the message "Payment successful – gate opening"
+    And the parking fee should be Rs. 280
+    And the EV reduction should be Rs. 70
+    And the service fee should be Rs. 20
+    And the total charge should be Rs. 230
+    And the remaining wallet should be Rs. 770
+    And the exit barrier should open
+
+  @boundary
+  Scenario: Electric-car discount is calculated from the capped fee 
+    Given driver "Hassan" has an active ParkEase session
+    And the electric vehicle "RWL-7788" belongs to this driver
+    And the wallet contains Rs. 1,000
+    And the vehicle has stayed for 20 h 0 min
+    When the vehicle exits the plaza
+    Then the driver should receive the message "Payment successful – gate opening"
+    And the parking fee should be Rs. 800
+    And the EV reduction should be Rs. 200
+    And the service fee should be Rs. 20
+    And the total charge should be Rs. 620
+    And the remaining wallet should be Rs. 380
+    And the exit barrier should open
+
+Feature: Petrol-car fee boundaries
+  As a registered ParkEase driver
+  I want parking charges to follow the published time bands
+  So that the amount taken from my wallet is predictable
+  Feature: Petrol-car fee boundaries 
+
+  @boundary
+  Scenario Outline: Petrol parking duration produces the stated charge -- @1.1 Free and rounding 
+    Given driver "Usman" has an active ParkEase session
+    And the petrol vehicle "ISB-9012" belongs to this driver
+    And the wallet contains Rs. 1,000
+    Given the vehicle has stayed for 15 min 0 s
+    When the vehicle exits the plaza
+    Then the parking fee should be Rs. 0
+    And the service fee should be Rs. 0
+    And the total charge should be Rs. 0
+    And the remaining wallet should be Rs. 1,000
+    And the exit barrier should open
+
+  @boundary
+  Scenario Outline: Petrol parking duration produces the stated charge -- @1.2 Free and rounding 
+    Given driver "Usman" has an active ParkEase session
+    And the petrol vehicle "ISB-9012" belongs to this driver
+    And the wallet contains Rs. 1,000
+    Given the vehicle has stayed for 15 min 1 s
+    When the vehicle exits the plaza
+    Then the parking fee should be Rs. 100
+    And the service fee should be Rs. 20
+    And the total charge should be Rs. 120
+    And the remaining wallet should be Rs. 880
+    And the exit barrier should open
+
+  @boundary
+  Scenario Outline: Petrol parking duration produces the stated charge -- @1.3 Free and rounding 
+    Given driver "Usman" has an active ParkEase session
+    And the petrol vehicle "ISB-9012" belongs to this driver
+    And the wallet contains Rs. 1,000
+    Given the vehicle has stayed for 60 min 0 s
+    When the vehicle exits the plaza
+    Then the parking fee should be Rs. 100
+    And the service fee should be Rs. 20
+    And the total charge should be Rs. 120
+    And the remaining wallet should be Rs. 880
+    And the exit barrier should open
+
+  @boundary
+  Scenario Outline: Petrol parking duration produces the stated charge -- @1.4 Free and rounding 
+    Given driver "Usman" has an active ParkEase session
+    And the petrol vehicle "ISB-9012" belongs to this driver
+    And the wallet contains Rs. 1,000
+    Given the vehicle has stayed for 61 min 0 s
+    When the vehicle exits the plaza
+    Then the parking fee should be Rs. 160
+    And the service fee should be Rs. 20
+    And the total charge should be Rs. 180
+    And the remaining wallet should be Rs. 820
+    And the exit barrier should open
+
+  @boundary
+  Scenario Outline: Petrol parking duration produces the stated charge -- @2.1 Daily cap 
+    Given driver "Usman" has an active ParkEase session
+    And the petrol vehicle "ISB-9012" belongs to this driver
+    And the wallet contains Rs. 1,000
+    Given the vehicle has stayed for 12 h 0 min 0 s
+    When the vehicle exits the plaza
+    Then the parking fee should be Rs. 760
+    And the service fee should be Rs. 20
+    And the total charge should be Rs. 780
+    And the remaining wallet should be Rs. 220
+    And the exit barrier should open
+
+  @boundary
+  Scenario Outline: Petrol parking duration produces the stated charge -- @2.2 Daily cap 
+    Given driver "Usman" has an active ParkEase session
+    And the petrol vehicle "ISB-9012" belongs to this driver
+    And the wallet contains Rs. 1,000
+    Given the vehicle has stayed for 12 h 0 min 1 s
+    When the vehicle exits the plaza
+    Then the parking fee should be Rs. 800
+    And the service fee should be Rs. 20
+    And the total charge should be Rs. 820
+    And the remaining wallet should be Rs. 180
+    And the exit barrier should open
+
+  @boundary
+  Scenario Outline: Petrol parking duration produces the stated charge -- @2.3 Daily cap 
+    Given driver "Usman" has an active ParkEase session
+    And the petrol vehicle "ISB-9012" belongs to this driver
+    And the wallet contains Rs. 1,000
+    Given the vehicle has stayed for 30 h 0 min 0 s
+    When the vehicle exits the plaza
+    Then the parking fee should be Rs. 800
+    And the service fee should be Rs. 20
+    And the total charge should be Rs. 820
+    And the remaining wallet should be Rs. 180
+    And the exit barrier should open
+
+Feature: Refuse exit when the wallet cannot cover the payment
+  As a ParkEase driver
+  I want an unpaid exit to be stopped
+  So that a vehicle cannot leave before its parking charge is settled
+  @negative
+  Scenario: Exit is refused when the wallet is one rupee short 
+    Given driver "Usman" has an active ParkEase session
+    And the petrol vehicle "ISB-9012" belongs to this driver
+    And the wallet contains Rs. 239
+    And the vehicle entered at 10:00
+    When the vehicle exits at 12:10
+    Then the driver should receive the message "Insufficient wallet balance"
+    And the wallet amount should remain unchanged
+    And the remaining wallet should be Rs. 239
+    And the exit barrier should remain closed
+
